@@ -1,52 +1,72 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.3">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram WebApp Auth</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ru"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Авторизация&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://telegram.org/js/telegram-web-app.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function sendUserData() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (window.Telegram &amp;&amp; Telegram.WebApp) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>let user = Telegram.WebApp.initDataUnsafe.user;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (user) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>fetch('https://your-server.com/auth', {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>method: 'POST',</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>headers: { 'Content-Type': 'application/json' },</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>body: JSON.stringify({</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>id: user.id,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>username: user.username,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>first_name: user.first_name,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>last_name: user.last_name</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>})</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}).then(response =&gt; response.json())</p>
-<p class="p1"><span class="Apple-converted-space">                      </span>.then(data =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                          </span>alert("Данные отправлены в бота!");</p>
-<p class="p1"><span class="Apple-converted-space">                      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>alert("Ошибка: данные пользователя недоступны.");</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Авторизация через Telegram&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="sendUserData()"&gt;Войти&lt;/button&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+    <div class="container">
+        <h2>Авторизация через Telegram</h2>
+        <p id="user-info">Нажмите кнопку ниже для входа</p>
+        <button onclick="sendData()">Войти через Telegram</button>
+    </div>
+
+    <script>
+        function sendData() {
+            const tg = window.Telegram.WebApp;
+            tg.expand();
+            
+            const user = tg.initDataUnsafe.user;
+            if (!user) {
+                alert("Ошибка получения данных пользователя");
+                return;
+            }
+            
+            document.getElementById("user-info").innerText = `Привет, ${user.first_name}!`;
+            
+            fetch("https://your-server.com/auth", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    username: user.username
+                })
+            }).then(response => response.json())
+              .then(data => console.log("Ответ сервера:", data))
+              .catch(error => console.error("Ошибка:", error));
+        }
+    </script>
 </body>
 </html>
