@@ -10,7 +10,6 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      /* Значения по умолчанию, которые позже будут переопределены через theme_params */
       background-color: #f4f4f4;
       color: #000;
       display: flex;
@@ -26,7 +25,6 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       max-width: 400px;
       width: 90%;
-      margin: auto;
     }
     button {
       padding: 10px 20px;
@@ -34,7 +32,6 @@
       background: #0088cc;
       color: white;
       border: none;
-      /* Более закругленные края кнопки */
       border-radius: 20px;
       cursor: pointer;
       margin-top: 20px;
@@ -48,70 +45,58 @@
 <body>
   <div class="container">
     <h2>Авторизация через Wallet</h2>
-    <!-- Добавляем контейнер для отображения информации о пользователе -->
-    <div id="user-info"></div>
+    <div id="user-info">Ожидание данных...</div>
     <button id="authButton" onclick="sendData()">START BOT</button>
   </div>
 
   <script>
-    // Инициализация Telegram WebApp SDK
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Применяем стили из Telegram theme_params, если они заданы
-    if (tg.theme_params) {
-      if (tg.theme_params.bg_color) {
-        document.body.style.backgroundColor = tg.theme_params.bg_color;
-      }
-      if (tg.theme_params.text_color) {
-        document.body.style.color = tg.theme_params.text_color;
-      }
-    }
+    console.log("Telegram WebApp SDK инициализирован");
+    console.log("initDataUnsafe:", tg.initDataUnsafe);
 
-    // Проверяем, авторизован ли пользователь ранее (чтобы не заставлять вводить кошелек повторно)
-    if (localStorage.getItem("walletAuthorized") === "true") {
-      document.getElementById("user-info").innerText = "Вы уже авторизованы.";
-      document.getElementById("authButton").disabled = true;
+    if (tg.theme_params) {
+      document.body.style.backgroundColor = tg.theme_params.bg_color || "#f4f4f4";
+      document.body.style.color = tg.theme_params.text_color || "#000";
     }
 
     function sendData() {
-      // Получаем данные из Telegram WebApp
+      console.log("Кнопка нажата, отправка данных...");
       const userData = tg.initDataUnsafe;
-      const user = userData.user;
 
-      if (!user) {
-        alert("Ошибка получения данных пользователя");
+      if (!userData || !userData.user) {
+        alert("Ошибка получения данных пользователя. Откройте WebApp через Telegram.");
         return;
       }
 
-      // Формирование приветственного сообщения
+      const user = userData.user;
       document.getElementById("user-info").innerText = `Привет, ${user.first_name}!`;
 
-      // Подготовка данных для отправки на сервер
       const payload = {
         user_id: user.id,
-        id: user.id,  // Можно дублировать или использовать один параметр для идентификации
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
-        auth_date: userData.auth_date  // Время авторизации, переданное Telegram
+        auth_date: userData.auth_date
       };
 
-      // Отправка POST-запроса на сервер
-      fetch("http://34.116.220.50:5000/auth", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
+      console.log("Отправка данных на сервер:", payload);
+
+      fetch("https://34.116.220.50:5000/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
       .then(response => response.json())
       .then(data => {
-          console.log("Ответ сервера:", data);
-          // Сохраняем факт авторизации, чтобы не требовать повторного ввода кошелька
-          localStorage.setItem("walletAuthorized", "true");
+        console.log("Ответ сервера:", data);
+        localStorage.setItem("walletAuthorized", "true");
       })
-      .catch(error => console.error("Ошибка:", error));
+      .catch(error => {
+        console.error("Ошибка запроса:", error);
+        alert("Ошибка соединения с сервером. Проверьте подключение к интернету и попробуйте снова.");
+      });
     }
   </script>
 </body>
