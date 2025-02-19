@@ -34,7 +34,8 @@
       background: #0088cc;
       color: white;
       border: none;
-      border-radius: 5px;
+      /* Более закругленные края кнопки */
+      border-radius: 20px;
       cursor: pointer;
       margin-top: 20px;
     }
@@ -47,6 +48,8 @@
 <body>
   <div class="container">
     <h2>Авторизация через Wallet</h2>
+    <!-- Добавляем контейнер для отображения информации о пользователе -->
+    <div id="user-info"></div>
     <button id="authButton" onclick="sendData()">START BOT</button>
   </div>
 
