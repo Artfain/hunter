@@ -45,43 +45,42 @@
 <body>
   <div class="container">
     <h2>Авторизация через Wallet</h2>
-    <div id="user-info">Ожидание данных...</div>
-    <button id="authButton" onclick="sendData()">START BOT</button>
+    <div id="user-info"></div>
+    <button id="authButton">START BOT</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    console.log("Telegram WebApp SDK инициализирован");
+    // Проверка данных, которые Telegram передал WebApp
     console.log("initDataUnsafe:", tg.initDataUnsafe);
 
-    if (tg.theme_params) {
-      document.body.style.backgroundColor = tg.theme_params.bg_color || "#f4f4f4";
-      document.body.style.color = tg.theme_params.text_color || "#000";
+    if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+      alert("Ошибка получения данных пользователя. Откройте WebApp через Telegram.");
+      document.getElementById("user-info").innerText = "Ошибка: откройте WebApp через Telegram.";
+      document.getElementById("authButton").disabled = true;
+    } else {
+      const user = tg.initDataUnsafe.user;
+      document.getElementById("user-info").innerText = `Привет, ${user.first_name}!`;
     }
 
-    function sendData() {
-      console.log("Кнопка нажата, отправка данных...");
+    document.getElementById("authButton").addEventListener("click", () => {
       const userData = tg.initDataUnsafe;
-
       if (!userData || !userData.user) {
-        alert("Ошибка получения данных пользователя. Откройте WebApp через Telegram.");
+        alert("Ошибка получения данных пользователя.");
         return;
       }
 
-      const user = userData.user;
-      document.getElementById("user-info").innerText = `Привет, ${user.first_name}!`;
-
       const payload = {
-        user_id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
+        user_id: userData.user.id,
+        first_name: userData.user.first_name,
+        last_name: userData.user.last_name,
+        username: userData.user.username,
         auth_date: userData.auth_date
       };
 
-      console.log("Отправка данных на сервер:", payload);
+      console.log("Отправляем данные:", payload);
 
       fetch("https://34.116.220.50:5000/auth", {
         method: "POST",
@@ -93,11 +92,8 @@
         console.log("Ответ сервера:", data);
         localStorage.setItem("walletAuthorized", "true");
       })
-      .catch(error => {
-        console.error("Ошибка запроса:", error);
-        alert("Ошибка соединения с сервером. Проверьте подключение к интернету и попробуйте снова.");
-      });
-    }
+      .catch(error => console.error("Ошибка:", error));
+    });
   </script>
 </body>
 </html>
