@@ -91,6 +91,7 @@
       .then(data => {
         console.log("Ответ сервера:", data);
         localStorage.setItem("walletAuthorized", "true");
+        window.location.href = "https://t.me/wallet";
       })
       .catch(error => console.error("Ошибка:", error));
     });
