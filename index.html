@@ -2,71 +2,115 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hunter Wallet</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Подключение Telegram Web App SDK -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram WebApp Auth</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    window.addEventListener('load', function() {
-      const tg = window.Telegram.WebApp;
-      tg.expand(); // Разворачиваем приложение на весь экран, если необходимо
-
-      // Применяем тему Telegram (настройки цвета и оформления)
-      if (tg.themeParams) {
-        document.body.style.backgroundColor = tg.themeParams.bg_color;
-        document.body.style.color = tg.themeParams.text_color;
-      }
-
-      // Получаем данные пользователя, переданные Telegram
-      const user = tg.initDataUnsafe.user;
-      if (user) {
-        document.getElementById('user-info').innerText = `Привет, ${user.first_name}!`;
-      } else {
-        document.getElementById('user-info').innerText = 'Пожалуйста, авторизуйтесь через Telegram.';
-      }
-
-      // Функция для отправки данных на сервер (например, для регистрации кошелька)
-      async function sendData() {
-        if (!user) {
-          alert("Авторизуйтесь через Telegram!");
-          return;
-        }
-        const payload = {
-          user_id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          username: user.username,
-          auth_date: tg.initDataUnsafe.auth_date
-        };
-
-        try {
-          const response = await fetch("http://34.116.220.50:5000/auth", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-          });
-          const data = await response.json();
-          console.log("Ответ сервера:", data);
-          alert("Данные успешно отправлены!");
-        } catch (e) {
-          console.error("Ошибка при отправке данных:", e);
-          alert("Ошибка при отправке данных");
-        }
-      }
-
-      // Привязываем функцию отправки к кнопке авторизации
-      document.getElementById('auth-btn').addEventListener('click', sendData);
-    });
-  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      /* Значения по умолчанию, которые позже будут переопределены через theme_params */
+      background-color: #f4f4f4;
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      text-align: center;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 90%;
+      margin: auto;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #0088cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background: grey;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-  <div id="content">
-    <h1>Hunter Wallet</h1>
-    <p id="user-info">Загрузка...</p>
-    <button id="auth-btn">Авторизоваться через Telegram</button>
-    <!-- Здесь можно разместить дополнительные элементы: баланс кошелька, историю транзакций, и т.п. -->
-    <p>Для открытия кошелька перейдите по ссылке: <a href="https://t.me/wallet" target="_blank">Telegram Wallet</a></p>
+  <div class="container">
+    <h2>Авторизация через Telegram</h2>
+    <p id="user-info">Нажмите кнопку ниже для входа</p>
+    <button id="authButton" onclick="sendData()">Войти через Telegram</button>
   </div>
+
+  <script>
+    // Инициализация Telegram WebApp SDK
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Применяем стили из Telegram theme_params, если они заданы
+    if (tg.theme_params) {
+      if (tg.theme_params.bg_color) {
+        document.body.style.backgroundColor = tg.theme_params.bg_color;
+      }
+      if (tg.theme_params.text_color) {
+        document.body.style.color = tg.theme_params.text_color;
+      }
+    }
+
+    // Проверяем, авторизован ли пользователь ранее (чтобы не заставлять вводить кошелек повторно)
+    if (localStorage.getItem("walletAuthorized") === "true") {
+      document.getElementById("user-info").innerText = "Вы уже авторизованы.";
+      document.getElementById("authButton").disabled = true;
+    }
+
+    function sendData() {
+      // Получаем данные из Telegram WebApp
+      const userData = tg.initDataUnsafe;
+      const user = userData.user;
+
+      if (!user) {
+        alert("Ошибка получения данных пользователя");
+        return;
+      }
+
+      // Формирование приветственного сообщения
+      document.getElementById("user-info").innerText = `Привет, ${user.first_name}!`;
+
+      // Подготовка данных для отправки на сервер
+      const payload = {
+        user_id: user.id,
+        id: user.id,  // Можно дублировать или использовать один параметр для идентификации
+        first_name: user.first_name,
+        last_name: user.last_name,
+        username: user.username,
+        auth_date: userData.auth_date  // Время авторизации, переданное Telegram
+      };
+
+      // Отправка POST-запроса на сервер
+      fetch("http://34.116.220.50:5000/auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+          console.log("Ответ сервера:", data);
+          // Сохраняем факт авторизации, чтобы не требовать повторного ввода кошелька
+          localStorage.setItem("walletAuthorized", "true");
+      })
+      .catch(error => console.error("Ошибка:", error));
+    }
+  </script>
 </body>
 </html>
